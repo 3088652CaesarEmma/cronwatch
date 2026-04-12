@@ -1,0 +1,22 @@
+# cronwatch default configuration
+# Copy to ~/.cronwatch.yml or /etc/cronwatch/config.yml and customize.
+
+log_dir: /var/log/cronwatch
+log_level: INFO
+retention_days: 30
+
+email:
+  enabled: false
+  smtp_host: smtp.example.com
+  smtp_port: 587
+  smtp_user: alerts@example.com
+  smtp_password: "changeme"
+  from_address: cronwatch@example.com
+  to_addresses:
+    - admin@example.com
+  use_tls: true
+
+slack:
+  enabled: false
+  webhook_url: https://hooks.slack.com/services/XXX/YYY/ZZZ
+  channel: "#ops-alerts"
