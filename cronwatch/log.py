@@ -91,3 +91,19 @@ def tail_job_log(job_name: str, n: int = 10, log_dir: Path | None = None) -> lis
     Returns an empty list if no log file exists for the job.
     """
     return read_job_log(job_name, log_dir=log_dir)[-n:]
+
+
+def list_logged_jobs(log_dir: Path | None = None) -> list[str]:
+    """Return a sorted list of job names that have log files in *log_dir*.
+
+    Job names are reconstructed from the log filenames by reversing the
+    sanitisation applied in :func:`log_result_json` (underscores are left
+    as-is since the original spaces and slashes are indistinguishable after
+    sanitisation, but the stem is returned as-is for transparency).
+
+    Returns an empty list if the log directory does not exist.
+    """
+    directory = log_dir or get_log_dir()
+    if not directory.exists():
+        return []
+    return sorted(p.stem for p in directory.glob("*.log"))
