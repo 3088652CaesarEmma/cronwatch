@@ -1,5 +1,6 @@
 log_dir: ~/.cronwatch/logs
-history_file: ~/.cronwatch/history.jsonl
+max_log_age_days: 30
+notify_on_success: false
 
 email:
   enabled: false
@@ -8,14 +9,14 @@ email:
   use_tls: false
   from_addr: cronwatch@localhost
   to_addrs: []
+  subject_prefix: "[cronwatch]"
 
 slack:
   enabled: false
   webhook_url: ""
+  channel: "#alerts"
+  username: cronwatch
 
-defaults:
-  retry_attempts: 1
-  retry_delay: 5.0
-  retry_backoff: 1.0
-  timeout: null
-  notify_on: failure
+alert:
+  cooldown_seconds: 3600
+  enabled: true
