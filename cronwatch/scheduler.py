@@ -1,89 +1,87 @@
-"""Scheduler module for parsing and evaluating cron expressions."""
+"""Cron scheduling helpers."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional
-import logging
-
-logger = logging.getLogger(__name__)
+from typing import Any, Optional
 
 
 @dataclass
 class CronEntry:
-    """Represents a single cron job entry."""
+    """Represents a single scheduled cron job."""
+
     name: str
     command: str
-    schedule: str
+    schedule: str = "* * * * *"
     enabled: bool = True
-    timeout: Optional[int] = None
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    timeout: Optional[float] = None
+    retry_policy: Any = None  # RetryPolicy — kept as Any to avoid circular import
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.name:
-            raise ValueError("CronEntry name cannot be empty")
+            raise ValueError("CronEntry name must not be empty")
         if not self.command:
-            raise ValueError("CronEntry command cannot be empty")
-        if not self.schedule:
-            raise ValueError("CronEntry schedule cannot be empty")
+            raise ValueError("CronEntry command must not be empty")
 
 
-def parse_cron_field(field_str: str, min_val: int, max_val: int) -> List[int]:
-    """Parse a single cron field and return list of matching values."""
-    values = []
-
+def parse_cron_field(field_str: str, min_val: int, max_val: int) -> set[int]:
+    """Parse a single cron field string into a set of matching integers."""
     if field_str == "*":
-        return list(range(min_val, max_val + 1))
+        return set(range(min_val, max_val + 1))
 
+    values: set[int] = set()
     for part in field_str.split(","):
         if "/" in part:
-            base, step = part.split("/", 1)
-            step = int(step)
-            start = min_val if base == "*" else int(base)
-            values.extend(range(start, max_val + 1, step))
+            range_part, step_str = part.split("/", 1)
+            step = int(step_str)
+            if range_part == "*":
+                start, end = min_val, max_val
+            elif "-" in range_part:
+                start, end = (int(x) for x in range_part.split("-", 1))
+            else:
+                start = end = int(range_part)
+            values.update(range(start, end + 1, step))
         elif "-" in part:
-            start, end = part.split("-", 1)
-            values.extend(range(int(start), int(end) + 1))
+            start, end = (int(x) for x in part.split("-", 1))
+            values.update(range(start, end + 1))
         else:
-            values.append(int(part))
+            values.add(int(part))
+    return values
 
-    return sorted(set(v for v in values if min_val <= v <= max_val))
 
+def is_due(entry: CronEntry, at: datetime) -> bool:
+    """Return True if *entry* is scheduled to run at *at*."""
+    if not entry.enabled:
+        return False
 
-def is_due(schedule: str, dt: Optional[datetime] = None) -> bool:
-    """Check if a cron schedule is due at the given datetime."""
-    if dt is None:
-        dt = datetime.now()
-
-    parts = schedule.strip().split()
+    parts = entry.schedule.split()
     if len(parts) != 5:
-        raise ValueError(f"Invalid cron schedule: '{schedule}'. Expected 5 fields.")
+        return False
 
-    minute_field, hour_field, dom_field, month_field, dow_field = parts
+    minute_f, hour_f, dom_f, month_f, dow_f = parts
 
-    minutes = parse_cron_field(minute_field, 0, 59)
-    hours = parse_cron_field(hour_field, 0, 23)
-    doms = parse_cron_field(dom_field, 1, 31)
-    months = parse_cron_field(month_field, 1, 12)
-    dows = parse_cron_field(dow_field, 0, 6)
+    checks = [
+        (minute_f, 0, 59, at.minute),
+        (hour_f, 0, 23, at.hour),
+        (dom_f, 1, 31, at.day),
+        (month_f, 1, 12, at.month),
+        (dow_f, 0, 6, at.weekday()),  # Monday=0 … Sunday=6
+    ]
 
-    return (
-        dt.minute in minutes
-        and dt.hour in hours
-        and dt.day in doms
-        and dt.month in months
-        and dt.weekday() in [d % 7 for d in dows]
-    )
-
-
-def get_due_jobs(entries: List[CronEntry], dt: Optional[datetime] = None) -> List[CronEntry]:
-    """Return list of enabled cron entries that are due at the given time."""
-    due = []
-    for entry in entries:
-        if not entry.enabled:
-            continue
+    for field_str, lo, hi, value in checks:
         try:
-            if is_due(entry.schedule, dt):
-                due.append(entry)
-        except ValueError as e:
-            logger.warning("Skipping job '%s': %s", entry.name, e)
-    return due
+            if value not in parse_cron_field(field_str, lo, hi):
+                return False
+        except (ValueError, IndexError):
+            return False
+
+    return True
+
+
+def get_due_jobs(entries: list[CronEntry], at: datetime | None = None) -> list[CronEntry]:
+    """Return all entries that are due at *at* (defaults to now)."""
+    if at is None:
+        at = datetime.now()
+    return [e for e in entries if is_due(e, at)]
