@@ -76,6 +76,15 @@ def test_cmd_list_filtered_by_tag(mock_config, capsys):
     assert "world" not in captured.out
 
 
+def test_cmd_list_no_matching_tag(mock_config, capsys):
+    """Listing with a tag that matches no jobs should succeed and print nothing meaningful."""
+    result = cmd_list(mock_config, tag="nonexistent")
+    assert result == 0
+    captured = capsys.readouterr()
+    assert "hello" not in captured.out
+    assert "world" not in captured.out
+
+
 def test_cmd_run_unknown_job(mock_config, capsys):
     result = cmd_run("nonexistent", mock_config)
     assert result == 2
