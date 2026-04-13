@@ -1,24 +1,33 @@
+# cronwatch default configuration
+
 log_dir: ~/.cronwatch/logs
-max_log_age_days: 30
 
 email:
   enabled: false
   smtp_host: localhost
   smtp_port: 25
   use_tls: false
-  from_address: cronwatch@localhost
-  to_addresses: []
+  from_addr: cronwatch@localhost
+  to_addrs: []
 
 slack:
   enabled: false
   webhook_url: ""
-  channel: "#alerts"
 
 retry:
   attempts: 1
-  delay_seconds: 0
+  delay: 0
   backoff: 1.0
 
 timeout:
-  seconds: null
-  kill_on_timeout: true
+  seconds: 0
+
+ratelimit:
+  window_seconds: 0
+
+output:
+  truncate:
+    max_lines: 500
+    max_bytes: 102400
+  redact:
+    patterns: []
