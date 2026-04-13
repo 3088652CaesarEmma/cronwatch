@@ -77,6 +77,13 @@ def test_release_lock_does_not_remove_foreign_lock(log_dir: str) -> None:
     assert lock_path.exists()
 
 
+def test_release_lock_is_idempotent(log_dir: str) -> None:
+    """Releasing a lock that does not exist should not raise an error."""
+    # No lock acquired — calling release should be a no-op
+    release_lock(log_dir, "nonexistent-job")
+    assert not get_lock_path(log_dir, "nonexistent-job").exists()
+
+
 def test_is_locked_returns_false_when_no_file(log_dir: str) -> None:
     assert is_locked(log_dir, "ghost-job") is False
 
