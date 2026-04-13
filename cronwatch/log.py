@@ -82,3 +82,12 @@ def read_job_log(job_name: str, log_dir: Path | None = None) -> list[dict]:
                 except json.JSONDecodeError:
                     pass
     return entries
+
+
+def tail_job_log(job_name: str, n: int = 10, log_dir: Path | None = None) -> list[dict]:
+    """Return the last *n* log entries for a job.
+
+    Useful for quickly inspecting recent runs without loading the entire log.
+    Returns an empty list if no log file exists for the job.
+    """
+    return read_job_log(job_name, log_dir=log_dir)[-n:]
