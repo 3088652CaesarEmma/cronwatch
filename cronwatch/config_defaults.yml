@@ -13,6 +13,7 @@ email:
 slack:
   enabled: false
   webhook_url: ""
+  channel: "#alerts"
 
 retry:
   attempts: 1
@@ -23,11 +24,23 @@ timeout:
   seconds: 0
 
 ratelimit:
-  window_seconds: 0
+  max_per_hour: 0
 
-output:
-  truncate:
-    max_lines: 500
-    max_bytes: 102400
-  redact:
-    patterns: []
+throttle:
+  min_interval: 0
+
+truncate:
+  max_lines: 100
+  max_bytes: 10240
+
+redact:
+  patterns: []
+
+jitter:
+  max_seconds: 0
+
+deadman:
+  interval: 0
+
+digest:
+  interval: 0
