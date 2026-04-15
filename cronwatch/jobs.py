@@ -62,3 +62,19 @@ def find_job_by_name(jobs: list[CronEntry], name: str) -> CronEntry | None:
 def filter_jobs_by_tag(jobs: list[CronEntry], tag: str) -> list[CronEntry]:
     """Return jobs that carry *tag* in their tags list."""
     return [j for j in jobs if tag in (j.tags or [])]
+
+
+def filter_jobs_by_tags(jobs: list[CronEntry], tags: list[str], match_all: bool = False) -> list[CronEntry]:
+    """Return jobs that match the given *tags*.
+
+    Args:
+        jobs: The list of jobs to filter.
+        tags: Tags to match against each job's tag list.
+        match_all: If True, a job must carry *all* of the given tags to be
+            included.  If False (the default), a job carrying *any* of the
+            given tags is included.
+    """
+    tag_set = set(tags)
+    if match_all:
+        return [j for j in jobs if tag_set.issubset(set(j.tags or []))]
+    return [j for j in jobs if tag_set.intersection(set(j.tags or []))]
