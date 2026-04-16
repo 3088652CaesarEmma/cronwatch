@@ -79,5 +79,15 @@ def on_failure_hook(fn: HookFn) -> HookFn:
     return _hook
 
 
+def on_success_hook(fn: HookFn) -> HookFn:
+    """Wrap *fn* so it only fires when the job exits with code 0."""
+
+    def _hook(result: JobResult) -> None:
+        if result.exit_code == 0:
+            fn(result)
+
+    return _hook
+
+
 # Module-level default registry used by the CLI pipeline.
 default_registry = HookRegistry()
