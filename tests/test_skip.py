@@ -105,7 +105,14 @@ def test_job_skipped_error_message():
     assert "condition met" in str(err)
 
 
+def test_job_skipped_error_is_exception():
+    """JobSkippedError should be raise-able as a standard exception."""
+    with pytest.raises(JobSkippedError):
+        raise JobSkippedError("myjob", "condition met")
+
+
 def test_job_skipped_error_attributes():
-    err = JobSkippedError("backup", "disk not mounted")
-    assert err.job_name == "backup"
-    assert err.reason == "disk not mounted"
+    """JobSkippedError should expose job_name and reason as attributes."""
+    err = JobSkippedError("myjob", "condition met")
+    assert err.job_name == "myjob"
+    assert err.reason == "condition met"
