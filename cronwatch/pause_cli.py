@@ -28,10 +28,20 @@ def add_pause_subcommands(subparsers: argparse._SubParsersAction) -> None:  # ty
     p_paused.set_defaults(func=cmd_list_paused)
 
 
+def _get_log_dir(args: argparse.Namespace) -> str | None:
+    """Extract the optional log_dir attribute from parsed arguments.
+
+    Returns ``None`` if *args* does not carry a ``log_dir`` attribute, which
+    causes the underlying pause helpers to fall back to their default
+    directory.
+    """
+    return getattr(args, "log_dir", None)
+
+
 def cmd_pause(args: argparse.Namespace) -> int:
     """Pause the specified job."""
     job_name: str = args.job
-    log_dir: str | None = getattr(args, "log_dir", None)
+    log_dir = _get_log_dir(args)
     if is_paused(job_name, log_dir):
         print(f"Job '{job_name}' is already paused.", file=sys.stderr)
         return 1
@@ -43,7 +53,7 @@ def cmd_pause(args: argparse.Namespace) -> int:
 def cmd_resume(args: argparse.Namespace) -> int:
     """Resume the specified job."""
     job_name: str = args.job
-    log_dir: str | None = getattr(args, "log_dir", None)
+    log_dir = _get_log_dir(args)
     if not is_paused(job_name, log_dir):
         print(f"Job '{job_name}' is not paused.", file=sys.stderr)
         return 1
@@ -54,7 +64,7 @@ def cmd_resume(args: argparse.Namespace) -> int:
 
 def cmd_list_paused(args: argparse.Namespace) -> int:
     """Print all currently paused jobs."""
-    log_dir: str | None = getattr(args, "log_dir", None)
+    log_dir = _get_log_dir(args)
     paused = list_paused(log_dir)
     if not paused:
         print("No jobs are currently paused.")
